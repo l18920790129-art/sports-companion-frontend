@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>运动智能伴侣与路线大师</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <!-- Leaflet 和 Vue3 已本地化，避免CDN加载失败 -->
+  <link rel="stylesheet" href="libs/leaflet.css" />
+  <script src="libs/leaflet.js"></script>
+  <script src="libs/vue.global.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #0f1117; color: #e0e0e0; }
@@ -293,6 +294,14 @@ createApp({
     }[h] || h);
     
     onMounted(() => {
+      // 修复Leaflet本地图标路径
+      delete L.Icon.Default.prototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconUrl: 'libs/images/marker-icon.png',
+        iconRetinaUrl: 'libs/images/marker-icon-2x.png',
+        shadowUrl: 'libs/images/marker-shadow.png',
+      });
+
       map = L.map('map', {
         center: [24.4434, 118.1500],
         zoom: 14,
