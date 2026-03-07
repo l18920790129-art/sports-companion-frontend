@@ -426,7 +426,7 @@ createApp({
       });
 
       map = L.map('map', {
-        center: [24.4434, 118.1500],
+        center: [24.4434, 118.0850],  // 修复：中心点对齐路线实际坐标区域
         zoom: 14,
         zoomControl: true,
       });
@@ -489,11 +489,11 @@ createApp({
         }
       });
       
-      // 水站标记
+      // 水站标记（修复：坐标对齐路线实际位置，原坐标偏移约4km）
       const waterStations = [
-        { name: '椰风寨饮水站', lat: 24.4380, lon: 118.1420 },
-        { name: '白城沙滩便利店', lat: 24.4450, lon: 118.1510 },
-        { name: '胡里山炮台补给点', lat: 24.4390, lon: 118.1580 },
+        { name: '椰风寨饮水站', lat: 24.4380, lon: 118.0850 },
+        { name: '白城沙滩便利店', lat: 24.4402, lon: 118.0842 },
+        { name: '胡里山炮台补给点', lat: 24.4428, lon: 118.0995 },
       ];
       waterStations.forEach(ws => {
         const wsIcon = L.divIcon({
@@ -564,11 +564,28 @@ createApp({
           }
         }, 4000);
         
-        const resp = await fetch('https://sports-companion-backend-production.up.railway.app/api/plan/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: query.value })
-        });
+        // 修复：添加60秒超时控制，防止LLM调用挂起
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000);
+        
+        let resp;
+        try {
+          resp = await fetch('https://sports-companion-backend-production.up.railway.app/api/plan/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: query.value }),
+            signal: controller.signal
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+        
+        if (!resp.ok) {
+          const errText = await resp.text();
+          loadingText.value = `❌ 请求失败（HTTP ${resp.status}）`;
+          loadingStep.value = errText.substring(0, 100);
+          return;
+        }
         
         const data = await resp.json();
         
@@ -581,10 +598,15 @@ createApp({
           
           drawRoutes(data.routes, data.recommended_route_id);
         } else {
-          alert('规划失败：' + data.error);
+          // 修复：用页面内提示替代alert()
+          loadingText.value = '❌ 规划失败：' + (data.error || '未知错误');
+          loadingStep.value = '请检查输入内容后重试';
         }
       } catch (e) {
-        alert('请求失败，请确认后端服务已启动：' + e.message);
+        // 修复：用页面内提示替代alert()
+        const msg = e.name === 'AbortError' ? '请求超时（60秒），请稍后重试' : e.message;
+        loadingText.value = '❌ 连接失败：' + msg;
+        loadingStep.value = '请确认网络连接正常';
       } finally {
         loading.value = false;
       }
