@@ -2,6 +2,7 @@ FROM nginx:alpine
 
 # 复制前端文件到nginx默认目录
 COPY index.html /usr/share/nginx/html/index.html
+COPY libs/ /usr/share/nginx/html/libs/
 
 # 使用环境变量PORT（Railway要求）
 RUN echo 'server { \
