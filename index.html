@@ -402,7 +402,7 @@
         <div style="font-size:11px; color:#78909c; margin-bottom:8px; font-weight:600;">路线图例</div>
         <div class="legend-item" v-for="(r, i) in routes" :key="r.route_id">
           <div class="legend-line" :style="{ background: routeColors[i], height: r.route_id === recommendedId ? '4px' : '2px' }"></div>
-          <span style="color:#b0bec5; font-size:11px;">{{ r.name.split('：')[0] }}
+          <span style="color:#b0bec5; font-size:11px;">{{ r.name.split('（')[0] }}
             <span v-if="r.route_id === recommendedId" style="color:#ffa726;">★</span>
           </span>
         </div>
